@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace MyLife.Services.Functions;
 
-internal static class FunctionHelpers
+public static class FunctionHelpers
 {
-    internal static string GetEnvironmentVariable(string name)
+    public static string GetEnvironmentVariable(string name)
     {
         return Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
     }

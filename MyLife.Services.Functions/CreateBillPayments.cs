@@ -1,9 +1,10 @@
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using MyLife.Services.Functions.Extensions;
-using MyLife.Services.Functions.Models;
-using MyLife.Services.Functions.Models.Notion.Filter;
-using MyLife.Services.Functions.Models.Notion.Page;
+using MyLife.Services.Shared.Extensions;
+using MyLife.Services.Shared.Models;
+using MyLife.Services.Shared.Models.Notion.Filter;
+using MyLife.Services.Shared.Models.Notion.Page;
+using MyLife.Services.Shared.Services;
 using System;
 using System.Threading.Tasks;
 
@@ -11,11 +12,18 @@ namespace MyLife.Services.Functions
 {
     public class CreateBillPayments
     {
-        [FunctionName("CreateBillPayments")]
-        public async Task RunAsync([TimerTrigger("0 0 6 * * *")] TimerInfo timerInfo, ILogger logger)
-        {
-            Initialize(logger);
+        private readonly INotionAPI _notionAPI;
+        private readonly ILogger<CreateBillPayments> _logger;
 
+        public CreateBillPayments(INotionAPI notionAPI, ILogger<CreateBillPayments> logger)
+        {
+            _notionAPI = notionAPI;
+            _logger = logger;
+        }
+
+        [Function("CreateBillPayments")]
+        public async Task RunAsync([TimerTrigger("0 0 6 * * *")] TimerInfo timerInfo)
+        {
             var billConfigurations = await GetBillConfigurations();
 
             if (billConfigurations.Length == 0)
@@ -25,16 +33,6 @@ namespace MyLife.Services.Functions
             {
                 await CreateBillPaymentIfNotExists(billConfiguration);
             }
-        }
-
-        private ILogger _logger;
-        private NotionAPI _notionAPI;
-
-        private void Initialize(ILogger logger)
-        {
-            _logger = logger;
-
-            _notionAPI = new();
         }
 
         private async Task<BillConfiguration[]> GetBillConfigurations()
