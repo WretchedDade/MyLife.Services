@@ -5,6 +5,8 @@ public class BillPayment
 {
     public BillPayment(NotionPage notionPage)
     {
+        Id = Guid.Parse(notionPage.Id);
+
         Name = notionPage.Properties["Name"].Title![0].PlainText;
 
         if (notionPage.Icon is NotionIcon icon)
@@ -55,6 +57,7 @@ public class BillPayment
         }
     }
 
+    public Guid Id { get; set; }
 
     public string Name { get; set; }
 
