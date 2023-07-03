@@ -2,6 +2,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using MyLife.Services.Shared.Extensions;
 using MyLife.Services.Shared.Models;
+using MyLife.Services.Shared.Models.Notion;
 using MyLife.Services.Shared.Models.Notion.Filter;
 using MyLife.Services.Shared.Models.Notion.Page;
 using MyLife.Services.Shared.Services;
@@ -35,15 +36,15 @@ namespace MyLife.Services.Functions
             }
         }
 
-        private async Task<BillConfiguration[]> GetBillConfigurations()
+        private async Task<BillConfigurationPage[]> GetBillConfigurations()
         {
             var databaseId = FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.NotionBillConfigurationDatabaseId);
-            var list = await _notionAPI.QueryDatabase<BillConfiguration>(databaseId);
+            var list = await _notionAPI.QueryDatabase<BillConfigurationPage>(databaseId);
 
             return list.Results;
         }
 
-        private async Task CreateBillPaymentIfNotExists(BillConfiguration billConfiguration)
+        private async Task CreateBillPaymentIfNotExists(BillConfigurationPage billConfiguration)
         {
             var billPaymentsDatabaseId = FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.NotionBillPaymentsDatabaseId);
 
@@ -78,7 +79,7 @@ namespace MyLife.Services.Functions
                 }
             };
 
-            var list = await _notionAPI.QueryDatabase<BillPayment>(billPaymentsDatabaseId, filter: filter);
+            var list = await _notionAPI.QueryDatabase<NotionPage>(billPaymentsDatabaseId, filter: filter);
 
             if (list.Results.Length > 0)
             {
@@ -94,7 +95,7 @@ namespace MyLife.Services.Functions
             await CreateBillPayment(nextPaymentDate.Value, billConfiguration, billPaymentsDatabaseId);
         }
 
-        private DateTime? GetNextPaymentDate(BillConfiguration billConfiguration)
+        private DateTime? GetNextPaymentDate(BillConfigurationPage billConfiguration)
         {
             if (billConfiguration.DayDueType == DayDueTypes.Fixed)
             {
@@ -136,7 +137,7 @@ namespace MyLife.Services.Functions
             }
         }
 
-        private async Task CreateBillPayment(DateTime paymentDate, BillConfiguration billConfiguration, string billPaymentsDatabaseId)
+        private async Task CreateBillPayment(DateTime paymentDate, BillConfigurationPage billConfiguration, string billPaymentsDatabaseId)
         {
             try
             {
@@ -167,7 +168,7 @@ namespace MyLife.Services.Functions
             }
         }
 
-        private async Task AutoPayBillPayment(BillPayment billPayment)
+        private async Task AutoPayBillPayment(NotionPage billPayment)
         {
             var name = billPayment.Properties["Name"].RichText?[0].PlainText;
 

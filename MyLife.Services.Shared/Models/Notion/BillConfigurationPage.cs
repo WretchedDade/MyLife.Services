@@ -1,8 +1,8 @@
 ﻿using MyLife.Services.Shared.Models.Notion.Page;
 using System;
 
-namespace MyLife.Services.Shared.Models;
-public class BillConfiguration : NotionPage
+namespace MyLife.Services.Shared.Models.Notion;
+public class BillConfigurationPage : NotionPage
 {
     public string Name => Properties["Name"].Title![0].PlainText;
 
