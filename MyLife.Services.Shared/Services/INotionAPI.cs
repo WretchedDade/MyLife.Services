@@ -11,6 +11,7 @@ namespace MyLife.Services.Shared.Services;
 public interface INotionAPI : IDisposable
 {
     Task<NotionPage> CreatePage(NotionPage page);
+    Task<TResult?> GetPage<TResult>(string id) where TResult : NotionPage;
     Task<NotionList<TResult>> QueryDatabase<TResult>(string databaseId, int pageSize = 10, string? startCursor = null, NotionFilter? filter = null, NotionSort[]? sorts = null) where TResult : NotionPage;
     Task<NotionPage> UpdatePage(string pageId, Dictionary<string, NotionProperty>? propertyUpdates = null, bool? archived = null, NotionIcon? icon = null, NotionCover? cover = null);
 }

@@ -13,7 +13,7 @@ internal class Program
     private static async Task Main(string[] args)
     {
         var host = new HostBuilder()
-            .ConfigureFunctionsWebApplication()
+            .ConfigureFunctionsWebApplication(options => options.UseAzureStaticWebAppMiddleware())
             .ConfigureServices(services =>
             {
                 services.AddMvcCore().AddNewtonsoftJson(options =>
@@ -22,10 +22,7 @@ internal class Program
                     options.SerializerSettings.Converters.Add(new StringEnumConverter());
                 });
 
-                services.ConfigureHttpJsonOptions(options =>
-                {
-                    options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-                });
+                services.ConfigureHttpJsonOptions(options => options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull);
 
                 services.AddHttpClient<INotionAPI, NotionAPI>(client =>
                 {
@@ -34,6 +31,8 @@ internal class Program
                     client.DefaultRequestHeaders.Authorization = new("Bearer", FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.NotionAccessToken));
                     client.DefaultRequestHeaders.Add("Notion-Version", "2022-02-22");
                 });
+
+                services.AddScoped<INotionService, NotionService>();
             })
             .Build();
 

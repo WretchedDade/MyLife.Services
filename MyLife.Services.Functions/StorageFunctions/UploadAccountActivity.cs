@@ -3,7 +3,7 @@ using System.IO;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace MyLife.Services.Functions
+namespace MyLife.Services.Functions.StorageFunctions
 {
     public class UploadAccountActivity
     {

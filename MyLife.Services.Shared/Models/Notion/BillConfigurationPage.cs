@@ -25,11 +25,6 @@ public class BillConfigurationPage : NotionPage
     }
 }
 
-public enum DayDueTypes
-{
-    Fixed, EndOfMonth
-}
-
 public static class DayDueTypeIds
 {
     public const string Fixed = "g@]J";

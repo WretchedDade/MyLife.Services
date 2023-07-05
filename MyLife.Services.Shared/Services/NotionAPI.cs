@@ -15,6 +15,15 @@ public class NotionAPI : INotionAPI
 
     public void Dispose() => _httpClient.Dispose();
 
+    public async Task<TResult?> GetPage<TResult>(string id) where TResult : NotionPage
+    {
+        var response = await _httpClient.GetAsync($"v1/pages/{id}");
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<TResult>();
+    }
+
     public async Task<NotionList<TResult>> QueryDatabase<TResult>(string databaseId, int pageSize = 10, string? startCursor = null, NotionFilter? filter = null, NotionSort[]? sorts = null) where TResult : NotionPage
     {
         JsonSerializerOptions serializerOptions = new()

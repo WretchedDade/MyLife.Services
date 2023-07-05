@@ -9,17 +9,20 @@ using MyLife.Services.Shared.Services;
 using System;
 using System.Threading.Tasks;
 
-namespace MyLife.Services.Functions
+namespace MyLife.Services.Functions.TimedFunctions
 {
     public class CreateBillPayments
     {
         private readonly INotionAPI _notionAPI;
+        private readonly INotionService _notionService;
         private readonly ILogger<CreateBillPayments> _logger;
 
-        public CreateBillPayments(INotionAPI notionAPI, ILogger<CreateBillPayments> logger)
+        public CreateBillPayments(INotionAPI notionAPI, INotionService notionService, ILoggerFactory loggerFactory)
         {
             _notionAPI = notionAPI;
-            _logger = logger;
+            _notionService = notionService;
+
+            _logger = loggerFactory.CreateLogger<CreateBillPayments>();
         }
 
         [Function("CreateBillPayments")]
@@ -51,16 +54,12 @@ namespace MyLife.Services.Functions
             DateTime? nextPaymentDate = GetNextPaymentDate(billConfiguration);
 
             if (!nextPaymentDate.HasValue)
-            {
                 // Next Payment Date could not be determined, unable to create Bill Payment
                 return;
-            }
 
             if (nextPaymentDate.Value.Subtract(DateTime.Today).TotalDays > 14)
-            {
                 // Next Payment Date is more than 14 days away, do not create Bill Payment
                 return;
-            }
 
             NotionFilter filter = new()
             {
@@ -84,9 +83,7 @@ namespace MyLife.Services.Functions
             if (list.Results.Length > 0)
             {
                 if (billConfiguration.IsAutoPay && DateTime.Today == nextPaymentDate.Value.Date)
-                {
                     await AutoPayBillPayment(list.Results[0]);
-                }
 
                 // There is already a bill payment for this payment date, do not create a bill payment
                 return;
@@ -106,10 +103,8 @@ namespace MyLife.Services.Functions
                 }
 
                 if (DateTime.Today.Day < billConfiguration.DayDue.Value)
-                {
                     // Bill is due in current month
                     return new DateTime(DateTime.Today.Year, DateTime.Today.Month, billConfiguration.DayDue.Value);
-                }
                 else
                 {
                     // Bill isn't due till next month
@@ -121,10 +116,8 @@ namespace MyLife.Services.Functions
                 DateTime endOfCurrentMonth = DateTime.Today.ToEndOfMonth();
 
                 if (DateTime.Today.Day < endOfCurrentMonth.Day)
-                {
                     // Bill is due in current month
                     return endOfCurrentMonth;
-                }
                 else
                 {
                     // Bill isn't due till next month
@@ -174,11 +167,7 @@ namespace MyLife.Services.Functions
 
             try
             {
-                await _notionAPI.UpdatePage(billPayment.Id, propertyUpdates: new()
-                {
-                    { "Is Paid", NotionProperty.OfCheckbox(true) },
-                    { "Date Paid", NotionProperty.OfDate(DateTime.Now.ToString("szzz")) }
-                });
+                await _notionService.MarkBillAsPaid(billPayment.Id);
 
                 _logger.LogInformation($"{name} Auto-Paid");
             }
