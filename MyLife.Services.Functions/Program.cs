@@ -13,7 +13,7 @@ internal class Program
     private static async Task Main(string[] args)
     {
         var host = new HostBuilder()
-            .ConfigureFunctionsWebApplication(options => options.UseAzureStaticWebAppMiddleware())
+            .ConfigureFunctionsWebApplication()
             .ConfigureServices(services =>
             {
                 services.AddMvcCore().AddNewtonsoftJson(options =>
