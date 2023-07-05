@@ -9,7 +9,7 @@ using MyLife.Services.Shared.Services;
 using System;
 using System.Threading.Tasks;
 
-namespace MyLife.Services.Functions.TimedFunctions
+namespace MyLife.Services.Functions.Functions
 {
     public class CreateBillPayments
     {
@@ -102,7 +102,7 @@ namespace MyLife.Services.Functions.TimedFunctions
                     return null;
                 }
 
-                if (DateTime.Today.Day < billConfiguration.DayDue.Value)
+                if (DateTime.Today.Day <= billConfiguration.DayDue.Value)
                     // Bill is due in current month
                     return new DateTime(DateTime.Today.Year, DateTime.Today.Month, billConfiguration.DayDue.Value);
                 else
