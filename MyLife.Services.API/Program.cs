@@ -24,7 +24,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policyBuilder => policyBuilder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-    options.AddPolicy("OnlyFrontEnd", policyBuilder => policyBuilder.WithOrigins(builder.Configuration["FrontEndBaseUrl"] ?? "").AllowAnyMethod().AllowAnyHeader())
+    options.AddPolicy("OnlyFrontEnd", policyBuilder => policyBuilder.WithOrigins(builder.Configuration["FrontEndBaseUrl"] ?? "").AllowAnyMethod().AllowAnyHeader());
 });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
