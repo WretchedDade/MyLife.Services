@@ -37,7 +37,7 @@ public class ConfigurationController : ControllerBase
             return NotFound();
     }
 
-    [HttpPost("[controller]/Bills", Name = "Get All Bill Configurations")]
+    [HttpGet("[controller]/Bills", Name = "Get All Bill Configurations")]
     public async Task<IActionResult> GetAllBillConfigurations()
     {
         var list = await _notionAPI.QueryDatabase<BillConfigurationPage>(_notionAppSettings.BillConfigurationDatabaseId);
