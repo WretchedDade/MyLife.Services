@@ -40,9 +40,9 @@ public class ConfigurationController : ControllerBase
     [HttpGet("[controller]/Bills", Name = "Get All Bill Configurations")]
     public async Task<IActionResult> GetAllBillConfigurations()
     {
-        var list = await _notionAPI.QueryDatabase<BillConfigurationPage>(_notionAppSettings.BillConfigurationDatabaseId);
+        var results = await _notionAPI.QueryDatabase<BillConfigurationPage>(_notionAppSettings.BillConfigurationDatabaseId);
 
-        var billConfigurations = list.Results.Select(page => new BillConfiguration(page));
+        var billConfigurations = results.Select(page => new BillConfiguration(page));
 
         return Ok(billConfigurations);
     }

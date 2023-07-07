@@ -24,7 +24,7 @@ public class NotionObject
 
         if (notionPage.Cover is NotionCover cover)
         {
-            CoverUri = cover.External.Uri;
+            CoverUri = cover.Uri;
         }
 
         if (notionPage.Parent is NotionParent parent)

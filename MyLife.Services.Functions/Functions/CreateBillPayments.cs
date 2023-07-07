@@ -7,6 +7,8 @@ using MyLife.Services.Shared.Models.Notion.Filter;
 using MyLife.Services.Shared.Models.Notion.Page;
 using MyLife.Services.Shared.Services;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MyLife.Services.Functions.Functions
@@ -30,7 +32,7 @@ namespace MyLife.Services.Functions.Functions
         {
             var billConfigurations = await GetBillConfigurations();
 
-            if (billConfigurations.Length == 0)
+            if (!billConfigurations.Any())
                 _logger.LogWarning("No Bill Configurations Found");
 
             foreach (var billConfiguration in billConfigurations)
@@ -39,12 +41,12 @@ namespace MyLife.Services.Functions.Functions
             }
         }
 
-        private async Task<BillConfigurationPage[]> GetBillConfigurations()
+        private async Task<IEnumerable<BillConfigurationPage>> GetBillConfigurations()
         {
             var databaseId = FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.NotionBillConfigurationDatabaseId);
-            var list = await _notionAPI.QueryDatabase<BillConfigurationPage>(databaseId);
+            var pages = await _notionAPI.QueryDatabase<BillConfigurationPage>(databaseId);
 
-            return list.Results;
+            return pages;
         }
 
         private async Task CreateBillPaymentIfNotExists(BillConfigurationPage billConfiguration)
@@ -78,12 +80,12 @@ namespace MyLife.Services.Functions.Functions
                 }
             };
 
-            var list = await _notionAPI.QueryDatabase<NotionPage>(billPaymentsDatabaseId, filter: filter);
+            var results = await _notionAPI.QueryDatabase<NotionPage>(billPaymentsDatabaseId, filter: filter);
 
-            if (list.Results.Length > 0)
+            if (results.Any())
             {
                 if (billConfiguration.IsAutoPay && DateTime.Today == nextPaymentDate.Value.Date)
-                    await AutoPayBillPayment(list.Results[0]);
+                    await AutoPayBillPayment(results.First());
 
                 // There is already a bill payment for this payment date, do not create a bill payment
                 return;

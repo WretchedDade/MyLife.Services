@@ -19,6 +19,8 @@ public class BillConfigurationPage : NotionPage
 
     public int? DayDue => (int?)Properties["Day Due"].Number;
 
+    public string? BudgetItemId => Properties["Budget Item"].Relationships?.FirstOrDefault()?.Id;
+
     public override string ToString()
     {
         return $"{Name}: {Amount}";

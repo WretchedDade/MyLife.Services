@@ -32,6 +32,9 @@ public class NotionPage : NotionObject
     [JsonPropertyName("parent")]
     public NotionParent? Parent { get; set; }
 
+    [JsonIgnore]
+    public string Name => GetProperty("Name")?.Title![0].PlainText ?? string.Empty;
+
     public NotionProperty? GetProperty(string name)
     {
         return Properties.ContainsKey(name) ? Properties[name] : null;

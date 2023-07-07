@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web.Resource;
+using MyLife.Services.API.Infra;
+using MyLife.Services.Shared.Models;
 using MyLife.Services.Shared.Models.Notion.Filter;
 using MyLife.Services.Shared.Models.Notion.Page;
-using MyLife.Services.Shared.Models;
 using MyLife.Services.Shared.Services;
-using Microsoft.Extensions.Options;
-using MyLife.Services.API.Infra;
 
 namespace MyLife.Services.API.Controllers;
 
@@ -35,9 +35,29 @@ public class BillsController : ControllerBase
         if (unpaidOnly.HasValue)
             filter = new() { Property = "Bill Paid", Checkbox = NotionFilterCheckbox.ThatEquals(false) };
 
-        var list = await _notionAPI.QueryDatabase<NotionPage>(_notionAppSettings.BillPaymentsDatabaseId, filter: filter);
+        var pages = await _notionAPI.QueryDatabase<NotionPage>(_notionAppSettings.BillPaymentsDatabaseId, filter: filter);
 
-        var billPayments = list.Results.Select(page => new BillPayment(page)).OrderBy(bill => bill.DateDue);
+        var billPayments = pages.Select(page => new BillPayment(page)).OrderBy(bill => bill.DateDue);
+
+        return Ok(billPayments);
+    }
+
+    [HttpGet("[controller]/Current", Name = "Get Current Bills")]
+    public async Task<IActionResult> GetCurrent()
+    {
+        NotionFilter? filter = new()
+        {
+            Or = new()
+            {
+                new(){ Property = "Date", Date = new() { ThisWeek = new { } } },
+                new(){ Property = "Date", Date = new() { NextWeek = new { } } }
+            }
+
+        };
+
+        var pages = await _notionAPI.QueryDatabase<NotionPage>(_notionAppSettings.BillPaymentsDatabaseId, filter: filter);
+
+        var billPayments = pages.Select(page => new BillPayment(page)).OrderBy(bill => bill.DateDue);
 
         return Ok(billPayments);
     }

@@ -2,6 +2,7 @@
 using MyLife.Services.Shared.Models.Notion.Filter;
 using MyLife.Services.Shared.Models.Notion.Page;
 using MyLife.Services.Shared.Models.Notion.Sort;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -24,7 +25,7 @@ public class NotionAPI : INotionAPI
         return await response.Content.ReadFromJsonAsync<TResult>();
     }
 
-    public async Task<NotionList<TResult>> QueryDatabase<TResult>(string databaseId, int pageSize = 10, string? startCursor = null, NotionFilter? filter = null, NotionSort[]? sorts = null) where TResult : NotionPage
+    public async Task<IEnumerable<TResult>> QueryDatabase<TResult>(string databaseId, int pageSize = int.MaxValue, string? startCursor = null, NotionFilter? filter = null, NotionSort[]? sorts = null) where TResult : NotionPage
     {
         JsonSerializerOptions serializerOptions = new()
         {
@@ -50,7 +51,11 @@ public class NotionAPI : INotionAPI
 
         var notionList = await response.Content.ReadFromJsonAsync<NotionList<TResult>>();
 
-        return notionList ?? new NotionList<TResult>();
+        if (notionList == null)
+            return Enumerable.Empty<TResult>();
+
+        return notionList.Results;
+
     }
 
     public async Task<NotionPage> CreatePage(NotionPage page)
@@ -101,5 +106,10 @@ public class NotionAPI : INotionAPI
         var updatedPage = await response.Content.ReadFromJsonAsync<NotionPage>();
 
         return updatedPage!;
+    }
+
+    public async Task DeletePages(params string[] pageIds)
+    {
+        await Task.WhenAll(pageIds.Select(id => UpdatePage(id, archived: true)));
     }
 }
