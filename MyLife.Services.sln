@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLife.Services.Functions",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLife.Services.Shared", "MyLife.Services.Shared\MyLife.Services.Shared.csproj", "{F22E24F7-AFF3-45BE-83EE-AE48DFF2086D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLife.Services.API", "MyLife.Services.API\MyLife.Services.API.csproj", "{5111EBB1-655B-40A5-AA39-6561BEB32BEE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLife.Services.API", "MyLife.Services.API\MyLife.Services.API.csproj", "{5111EBB1-655B-40A5-AA39-6561BEB32BEE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

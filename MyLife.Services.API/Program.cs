@@ -1,6 +1,8 @@
+using Azure.Core.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Models;
 using MyLife.Services.API.Infra;
 using MyLife.Services.Shared.Services;
@@ -65,12 +67,27 @@ builder.Services.AddHttpClient<INotionAPI, NotionAPI>((services, client) =>
 });
 
 builder.Services.AddScoped<INotionService, NotionService>();
+builder.Services.AddScoped<BloodPressureSettings>(services =>
+{
+    var configuration = services.GetRequiredService<IConfiguration>();
+
+    return new() { 
+        Key = configuration["Cosmos:MyLifeKey"] ?? "",
+        Endpoint = configuration["Cosmos:MyLifeEndpoint"] ?? "",
+    };
+});
+builder.Services.AddScoped<IBloodPressureService, BloodPressureService>();
+
+// Setup a listener to monitor logged events.
+using AzureEventSourceListener listener = AzureEventSourceListener.CreateConsoleLogger();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    IdentityModelEventSource.ShowPII = true;
+
     app.UseCors("AllowAll");
 }
 else

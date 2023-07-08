@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MyLife.Services.Functions;
 using MyLife.Services.Shared.Services;
@@ -33,6 +34,19 @@ internal class Program
                 });
 
                 services.AddScoped<INotionService, NotionService>();
+
+                services.AddScoped<BloodPressureSettings>(services =>
+                {
+                    var key = FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.CosmosMyLifeKey);
+                    var endpoint = FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.CosmosMyLifeEndpoint);
+
+                    return new()
+                    {
+                        Key = key,
+                        Endpoint = endpoint,
+                    };
+                });
+                services.AddScoped<IBloodPressureService, BloodPressureService>();
             })
             .Build();
 
