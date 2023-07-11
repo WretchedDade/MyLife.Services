@@ -27,35 +27,45 @@ public class BillsController : ControllerBase
         _notionAppSettings = notionAppSettingsOptions.Value;
     }
 
-    [HttpGet("[controller]", Name = "Get All Bills")]
-    public async Task<IActionResult> GetAll([FromQuery] bool? unpaidOnly = null)
+    [HttpGet("[controller]/Unpaid", Name = "Get Unpaid Bills")]
+    public async Task<IActionResult> GetUnpaid()
     {
-        NotionFilter? filter = null;
-
-        if (unpaidOnly.HasValue)
-            filter = new() { Property = "Bill Paid", Checkbox = NotionFilterCheckbox.ThatEquals(false) };
-
-        var pages = await _notionAPI.QueryDatabase<NotionPage>(_notionAppSettings.BillPaymentsDatabaseId, filter: filter);
+        var pages = await _notionAPI.QueryDatabase<NotionPage>(_notionAppSettings.BillPaymentsDatabaseId, filter: new()
+        {
+            Property = "Bill Paid",
+            Checkbox = NotionFilterCheckbox.ThatEquals(false)
+        });
 
         var billPayments = pages.Select(page => new BillPayment(page)).OrderBy(bill => bill.DateDue);
 
         return Ok(billPayments);
     }
 
-    [HttpGet("[controller]/Current", Name = "Get Current Bills")]
-    public async Task<IActionResult> GetCurrent()
+    [HttpGet("[controller]/ThisWeek", Name = "Get bills due this week")]
+    public async Task<IActionResult> GetThisWeek()
     {
-        NotionFilter? filter = new()
+        var pages = await _notionAPI.QueryDatabase<NotionPage>(_notionAppSettings.BillPaymentsDatabaseId, filter: new()
         {
-            Or = new()
+            Property = "Date",
+            Date = new() { ThisWeek = new { } }
+        });
+
+        var billPayments = pages.Select(page => new BillPayment(page)).OrderBy(bill => bill.DateDue);
+
+        return Ok(billPayments);
+    }
+
+    [HttpGet("[controller]/NextWeek", Name = "Get bills due next week")]
+    public async Task<IActionResult> GetNextWeek()
+    {
+        var pages = await _notionAPI.QueryDatabase<NotionPage>(_notionAppSettings.BillPaymentsDatabaseId, filter: new()
+        {
+            And = new()
             {
-                new(){ Property = "Date", Date = new() { ThisWeek = new { } } },
-                new(){ Property = "Date", Date = new() { NextWeek = new { } } }
+                new(){ Property = "Date", Date = new() { OnOrAfter = DateTime.Today.AddDays(7) } },
+                new(){ Property = "Date", Date = new() { OnOrBefore = DateTime.Today.AddDays(14) } }
             }
-
-        };
-
-        var pages = await _notionAPI.QueryDatabase<NotionPage>(_notionAppSettings.BillPaymentsDatabaseId, filter: filter);
+        });
 
         var billPayments = pages.Select(page => new BillPayment(page)).OrderBy(bill => bill.DateDue);
 
