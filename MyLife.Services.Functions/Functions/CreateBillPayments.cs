@@ -59,7 +59,7 @@ namespace MyLife.Services.Functions.Functions
                 // Next Payment Date could not be determined, unable to create Bill Payment
                 return;
 
-            if (nextPaymentDate.Value.Subtract(DateTime.Today).TotalDays > 14)
+            if (nextPaymentDate.Value.Date.Subtract(DateTime.Today).TotalDays > 14)
                 // Next Payment Date is more than 14 days away, do not create Bill Payment
                 return;
 
@@ -106,16 +106,16 @@ namespace MyLife.Services.Functions.Functions
 
                 if (DateTime.Today.Day <= billConfiguration.DayDue.Value)
                     // Bill is due in current month
-                    return new DateTime(DateTime.Today.Year, DateTime.Today.Month, billConfiguration.DayDue.Value);
+                    return new DateTime(DateTime.Today.Year, DateTime.Today.Month, billConfiguration.DayDue.Value, 0,0,0, DateTimeKind.Utc);
                 else
                 {
                     // Bill isn't due till next month
-                    return new DateTime(DateTime.Today.Year, DateTime.Today.Month + 1, billConfiguration.DayDue.Value);
+                    return new DateTime(DateTime.Today.Year, DateTime.Today.Month + 1, billConfiguration.DayDue.Value, 0, 0, 0, DateTimeKind.Utc);
                 }
             }
             else if (billConfiguration.DayDueType == DayDueTypes.EndOfMonth)
             {
-                DateTime endOfCurrentMonth = DateTime.Today.ToEndOfMonth();
+                DateTime endOfCurrentMonth = DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc).ToEndOfMonth();
 
                 if (DateTime.Today.Day < endOfCurrentMonth.Day)
                     // Bill is due in current month
@@ -165,6 +165,9 @@ namespace MyLife.Services.Functions.Functions
 
         private async Task AutoPayBillPayment(NotionPage billPayment)
         {
+            if (billPayment.GetProperty("Bill Paid")?.IsChecked == true)
+                return;
+
             var name = billPayment.Properties["Name"].RichText?[0].PlainText;
 
             try

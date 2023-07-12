@@ -11,4 +11,16 @@ public static class DateTimeExtensions
 
     public static DateTime ToEndOfMonth(this DateTime dateTime) => dateTime.ToFirstOfMonth().AddMonths(1).AddTicks(-1);
 
+    public static DateTime GetNextMonday(this DateTime dateTime) => dateTime.DayOfWeek switch
+    {
+        DayOfWeek.Monday => dateTime.AddDays(7),
+        DayOfWeek.Tuesday => dateTime.AddDays(6),
+        DayOfWeek.Wednesday => dateTime.AddDays(5),
+        DayOfWeek.Thursday => dateTime.AddDays(4),
+        DayOfWeek.Friday => dateTime.AddDays(3),
+        DayOfWeek.Saturday => dateTime.AddDays(2),
+        DayOfWeek.Sunday => dateTime.AddDays(1),
+        _ => throw new NotImplementedException()
+    };
+
 }

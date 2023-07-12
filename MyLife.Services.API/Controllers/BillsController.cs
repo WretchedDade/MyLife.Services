@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web.Resource;
 using MyLife.Services.API.Infra;
+using MyLife.Services.Shared.Extensions;
 using MyLife.Services.Shared.Models;
 using MyLife.Services.Shared.Models.Notion.Filter;
 using MyLife.Services.Shared.Models.Notion.Page;
@@ -58,12 +59,14 @@ public class BillsController : ControllerBase
     [HttpGet("[controller]/NextWeek", Name = "Get bills due next week")]
     public async Task<IActionResult> GetNextWeek()
     {
+        var startOfNextWeek = DateTime.UtcNow.Date.GetNextMonday();
+
         var pages = await _notionAPI.QueryDatabase<NotionPage>(_notionAppSettings.BillPaymentsDatabaseId, filter: new()
         {
             And = new()
             {
-                new(){ Property = "Date", Date = new() { OnOrAfter = DateTime.Today.AddDays(7) } },
-                new(){ Property = "Date", Date = new() { OnOrBefore = DateTime.Today.AddDays(14) } }
+                new(){ Property = "Date", Date = new() { OnOrAfter = startOfNextWeek } },
+                new(){ Property = "Date", Date = new() { OnOrBefore = startOfNextWeek.AddDays(7) } }
             }
         });
 
