@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Models;
 using MyLife.Services.API.Infra;
 using MyLife.Services.Shared.Services;
+using Prometheus;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -106,10 +107,14 @@ app.MapHealthChecks("/health");
 
 app.UseHttpsRedirection();
 
+app.UseHttpMetrics(options => options.ReduceStatusCodeCardinality());
+
 app.UseAuthentication();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapMetrics();
 
 app.Run();
