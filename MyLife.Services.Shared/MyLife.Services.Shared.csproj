@@ -10,7 +10,7 @@
     <PackageReference Include="Azure.Identity" Version="1.9.0" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.35.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Graph" Version="5.17.0" />
+    <PackageReference Include="Microsoft.Graph" Version="5.18.0" />
   </ItemGroup>
 
 </Project>

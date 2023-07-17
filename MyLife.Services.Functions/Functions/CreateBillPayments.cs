@@ -59,7 +59,7 @@ namespace MyLife.Services.Functions.Functions
                 // Next Payment Date could not be determined, unable to create Bill Payment
                 return;
 
-            if (nextPaymentDate.Value.Date.Subtract(DateTime.Today).TotalDays > 14)
+            if (nextPaymentDate.Value.Date.Subtract(DateTime.Today).TotalDays >= 15)
                 // Next Payment Date is more than 14 days away, do not create Bill Payment
                 return;
 
