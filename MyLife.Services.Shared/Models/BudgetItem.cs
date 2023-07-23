@@ -40,5 +40,7 @@ public class BudgetItem : NotionObject
 
     public string Category { get; set; } = string.Empty;
 
+    public bool IsIncome => Category == "Income";
+
     public List<NotionTag> Tags { get; set; } = new();
 }
