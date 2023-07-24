@@ -68,7 +68,7 @@ builder.Services.AddHttpClient<INotionAPI, NotionAPI>((services, client) =>
 });
 
 builder.Services.AddScoped<INotionService, NotionService>();
-builder.Services.AddScoped<BloodPressureSettings>(services =>
+builder.Services.AddScoped<MyLifeCosmosSettings>(services =>
 {
     var configuration = services.GetRequiredService<IConfiguration>();
 
@@ -77,7 +77,10 @@ builder.Services.AddScoped<BloodPressureSettings>(services =>
         Endpoint = configuration["Cosmos:MyLifeEndpoint"] ?? "",
     };
 });
+
 builder.Services.AddScoped<IBloodPressureService, BloodPressureService>();
+builder.Services.AddScoped<IAccountActivityService, AccountActivityService>();
+builder.Services.AddScoped<IBankKeywordConfigService, BankKeywordConfigService>();
 
 // Setup a listener to monitor logged events.
 using AzureEventSourceListener listener = AzureEventSourceListener.CreateConsoleLogger();

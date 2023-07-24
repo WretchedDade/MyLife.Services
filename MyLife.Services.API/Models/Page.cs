@@ -8,7 +8,7 @@ public class Page<TModel> where TModel : class
 
     public int TotalCount { get; set; }
 
-    public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
+    public int TotalPages => PageSize == 0 ? 1 : (int)Math.Ceiling(TotalCount / (double)PageSize);
 
     public List<TModel> Items { get; set; } = new();
 
@@ -16,10 +16,10 @@ public class Page<TModel> where TModel : class
 
     public bool HasNextPage => PageNumber < (TotalPages - 1);
 
-    public Page(int pageNumber, int pageSize, int totalCount, List<TModel> items)
+    public Page(int pageNumber, int? pageSize, int totalCount, List<TModel> items)
     {
         PageNumber = pageNumber;
-        PageSize = pageSize;
+        PageSize = pageSize ?? items.Count;
         TotalCount = totalCount;
         Items = items;
     }

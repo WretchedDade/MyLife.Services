@@ -18,7 +18,7 @@ public class BloodPressureService : IBloodPressureService
     private const string DatabaseId = "MyLife";
     private const string ContainerId = "Blood Pressure Readings";
 
-    private readonly BloodPressureSettings _settings;
+    private readonly MyLifeCosmosSettings _settings;
 
     private readonly CosmosClientOptions _cosmosClientOptions = new()
     {
@@ -28,7 +28,7 @@ public class BloodPressureService : IBloodPressureService
         }
     };
 
-    public BloodPressureService(BloodPressureSettings settings) => _settings = settings;
+    public BloodPressureService(MyLifeCosmosSettings settings) => _settings = settings;
 
     public async Task<BloodPressureReading> CreateReading(int systolic, int diastolic, int? heartRate, DateTime timeAtReading, CancellationToken cancellationToken = default)
     {
@@ -139,9 +139,3 @@ public record BloodPressureReading(
     int? HeartRate,
     DateTime TimeAtReading
 );
-
-public class BloodPressureSettings
-{
-    public required string Key { get; set; }
-    public required string Endpoint { get; set; }
-}

@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MyLife.Services.Functions;
 using MyLife.Services.Shared.Services;
@@ -21,9 +20,15 @@ internal class Program
                 {
                     options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
                     options.SerializerSettings.Converters.Add(new StringEnumConverter());
+                    options.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
+                    options.SerializerSettings.DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ";
+
                 });
 
-                services.ConfigureHttpJsonOptions(options => options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull);
+                services.ConfigureHttpJsonOptions(options =>
+                {
+                    options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                });
 
                 services.AddHttpClient<INotionAPI, NotionAPI>(client =>
                 {
@@ -35,7 +40,7 @@ internal class Program
 
                 services.AddScoped<INotionService, NotionService>();
 
-                services.AddScoped<BloodPressureSettings>(services =>
+                services.AddScoped<MyLifeCosmosSettings>(services =>
                 {
                     var key = FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.CosmosMyLifeKey);
                     var endpoint = FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.CosmosMyLifeEndpoint);
@@ -46,7 +51,10 @@ internal class Program
                         Endpoint = endpoint,
                     };
                 });
+
                 services.AddScoped<IBloodPressureService, BloodPressureService>();
+                services.AddScoped<IAccountActivityService, AccountActivityService>();
+                services.AddScoped<IBankKeywordConfigService, BankKeywordConfigService>();
             })
             .Build();
 
