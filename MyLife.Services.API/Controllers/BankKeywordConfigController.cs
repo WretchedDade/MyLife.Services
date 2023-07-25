@@ -52,6 +52,22 @@ public class BankKeywordConfigController : MyLifeController
         return Ok(page);
     }
 
+    [HttpGet("AccountActivity/Config/Keywords/Categories", Name = "Get Keyword Categories")]
+    public async Task<IActionResult> GetCategories()
+    {
+        var items = await _bankKeywordConfigService.GetCategories();
+
+        return Ok(items);
+    }
+
+    [HttpGet("AccountActivity/Config/Keywords/Names", Name = "Get Keyword Names")]
+    public async Task<IActionResult> GetNames()
+    {
+        var items = await _bankKeywordConfigService.GetNames();
+
+        return Ok(items);
+    }
+
     [HttpPost("AccountActivity/Config/Keywords", Name = "Create Keyword Config")]
     public async Task<IActionResult> Create(CreateKeywordConfigModel model)
     {

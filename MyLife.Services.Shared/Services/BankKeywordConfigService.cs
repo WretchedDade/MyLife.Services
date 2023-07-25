@@ -9,34 +9,26 @@ public interface IBankKeywordConfigService
     Task<int> Count();
     Task<BankKeyword> Create(string keyword, string name, string category, CancellationToken cancellationToken = default);
     Task Delete(string keyword);
-    Task<List<BankKeyword>> Get(int pageNumber = 0, int? pageSize = null);
     Task<BankKeyword> Get(string keyword);
+    Task<List<BankKeyword>> Get(int pageNumber = 0, int? pageSize = null);
+    Task<List<string>> GetCategories();
+    Task<List<string>> GetNames();
     Task<BankKeyword> Update(string keyword, string name, string category, CancellationToken cancellationToken = default);
 }
 
-public class BankKeywordConfigService : IBankKeywordConfigService
+public class BankKeywordConfigService : CosmosService, IBankKeywordConfigService
 {
     public const string DatabaseId = "MyLife";
     public const string ContainerId = "Bank Keyword Config";
     public const string PartitionKey = "/id";
 
-    private readonly MyLifeCosmosSettings _settings;
-
-    private readonly CosmosClientOptions _cosmosClientOptions = new()
+    public BankKeywordConfigService(CosmosClient cosmosClient) : base(cosmosClient)
     {
-        SerializerOptions = new CosmosSerializationOptions()
-        {
-            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
-        }
-    };
-
-    public BankKeywordConfigService(MyLifeCosmosSettings settings) => _settings = settings;
+    }
 
     public async Task<int> Count()
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         var count = await container.GetItemLinqQueryable<BankKeyword>().CountAsync();
@@ -46,9 +38,7 @@ public class BankKeywordConfigService : IBankKeywordConfigService
 
     public async Task<BankKeyword> Create(string keyword, string name, string category, CancellationToken cancellationToken = default)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         BankKeyword reading = await container.CreateItemAsync(
@@ -61,9 +51,7 @@ public class BankKeywordConfigService : IBankKeywordConfigService
 
     public async Task Delete(string keyword)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         await container.DeleteItemAsync<BankKeyword>(keyword, new(keyword));
@@ -71,19 +59,15 @@ public class BankKeywordConfigService : IBankKeywordConfigService
 
     public async Task<BankKeyword> Get(string keyword)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         return await container.ReadItemAsync<BankKeyword>(keyword, new(keyword));
     }
 
-    public async Task<List<BankKeyword>> Get(int pageNumber = 0, int? pageSize = null)
+    public Task<List<BankKeyword>> Get(int pageNumber = 0, int? pageSize = null)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         IQueryable<BankKeyword> query = container.GetItemLinqQueryable<BankKeyword>()
@@ -99,24 +83,38 @@ public class BankKeywordConfigService : IBankKeywordConfigService
 
         var feed = query.ToFeedIterator();
 
-        List<BankKeyword> results = new();
+        return ReadFeed(feed);
+    }
 
-        while (feed.HasMoreResults)
-        {
-            foreach (BankKeyword reading in await feed.ReadNextAsync())
-            {
-                results.Add(reading);
-            }
-        }
+    public async Task<List<string>> GetCategories()
+    {
+        Database database = CosmosClient.GetDatabase(DatabaseId);
+        Container container = database.GetContainer(ContainerId);
 
-        return results;
+        var feed = container.GetItemLinqQueryable<BankKeyword>()
+            .Select(keyword => keyword.Category)
+            .Distinct()
+            .ToFeedIterator();
+
+        return await ReadFeed(feed);
+    }
+
+    public async Task<List<string>> GetNames()
+    {
+        Database database = CosmosClient.GetDatabase(DatabaseId);
+        Container container = database.GetContainer(ContainerId);
+
+        var feed = container.GetItemLinqQueryable<BankKeyword>()
+            .Select(keyword => keyword.Name)
+            .Distinct()
+            .ToFeedIterator();
+
+        return await ReadFeed(feed);
     }
 
     public async Task<BankKeyword> Update(string keyword, string name, string category, CancellationToken cancellationToken = default)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         return await container.UpsertItemAsync(

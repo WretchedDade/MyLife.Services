@@ -1,5 +1,6 @@
 using Azure.Core.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Logging;
@@ -8,6 +9,7 @@ using MyLife.Services.API.Infra;
 using MyLife.Services.Shared.Services;
 using Prometheus;
 using System.Text.Json.Serialization;
+using static Prometheus.MetricServerMiddleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,16 +69,26 @@ builder.Services.AddHttpClient<INotionAPI, NotionAPI>((services, client) =>
     client.DefaultRequestHeaders.Add("Notion-Version", "2022-02-22");
 });
 
-builder.Services.AddScoped<INotionService, NotionService>();
-builder.Services.AddScoped<MyLifeCosmosSettings>(services =>
+builder.Services.AddSingleton<CosmosClient>(services =>
 {
     var configuration = services.GetRequiredService<IConfiguration>();
 
-    return new() { 
-        Key = configuration["Cosmos:MyLifeKey"] ?? "",
-        Endpoint = configuration["Cosmos:MyLifeEndpoint"] ?? "",
+
+    var key = configuration["Cosmos:MyLifeKey"] ?? "";
+    var endpoint = configuration["Cosmos:MyLifeEndpoint"] ?? "";
+
+    CosmosClientOptions cosmosClientOptions = new()
+    {
+        SerializerOptions = new CosmosSerializationOptions()
+        {
+            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
+        }
     };
+
+    return new(endpoint, key, cosmosClientOptions);
 });
+
+builder.Services.AddScoped<INotionService, NotionService>();
 
 builder.Services.AddScoped<IBloodPressureService, BloodPressureService>();
 builder.Services.AddScoped<IAccountActivityService, AccountActivityService>();

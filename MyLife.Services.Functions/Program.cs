@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MyLife.Services.Functions;
 using MyLife.Services.Shared.Services;
@@ -38,19 +40,25 @@ internal class Program
                     client.DefaultRequestHeaders.Add("Notion-Version", "2022-02-22");
                 });
 
-                services.AddScoped<INotionService, NotionService>();
-
-                services.AddScoped<MyLifeCosmosSettings>(services =>
+                services.AddSingleton<CosmosClient>(services =>
                 {
+                    var configuration = services.GetRequiredService<IConfiguration>();
+
                     var key = FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.CosmosMyLifeKey);
                     var endpoint = FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.CosmosMyLifeEndpoint);
 
-                    return new()
+                    CosmosClientOptions cosmosClientOptions = new()
                     {
-                        Key = key,
-                        Endpoint = endpoint,
+                        SerializerOptions = new CosmosSerializationOptions()
+                        {
+                            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
+                        }
                     };
+
+                    return new(endpoint, key, cosmosClientOptions);
                 });
+
+                services.AddScoped<INotionService, NotionService>();
 
                 services.AddScoped<IBloodPressureService, BloodPressureService>();
                 services.AddScoped<IAccountActivityService, AccountActivityService>();

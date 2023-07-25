@@ -144,7 +144,6 @@ namespace MyLife.Services.Functions.Functions
         private async Task<Dictionary<string, (string Name, string Category)>> GetKeywords()
         {
             var billConfigurationDatabaseId = FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.NotionBillConfigurationDatabaseId);
-            var expenseConfigurationDatabaseId = FunctionHelpers.GetEnvironmentVariable(EnvironmentVariables.NotionExpenseConfigurationDatabaseId);
 
             Dictionary<string, (string Name, string Category)> keywords = ManualKeywords;
 
@@ -159,23 +158,7 @@ namespace MyLife.Services.Functions.Functions
                     var trimmedKeyword = keyword.Trim();
 
                     if (!string.IsNullOrEmpty(trimmedKeyword) && !keywords.ContainsKey(trimmedKeyword))
-                        keywords.Add(trimmedKeyword, (billConfigurationPage.Name, billConfigurationPage.Name));
-                }
-            }
-
-
-            var expensePages = await _notionAPI.QueryDatabase<NotionPage>(expenseConfigurationDatabaseId);
-
-            foreach (var expensePage in expensePages)
-            {
-                var expenseKeywords = expensePage.GetProperty("Account Activity Keywords")?.RichText?.FirstOrDefault()?.PlainText ?? "";
-
-                foreach (var keyword in expenseKeywords.Split(", "))
-                {
-                    var trimmedKeyword = keyword.Trim();
-
-                    if (!string.IsNullOrEmpty(trimmedKeyword) && !keywords.ContainsKey(trimmedKeyword))
-                        keywords.Add(trimmedKeyword, (expensePage.Name, expensePage.Name));
+                        keywords.Add(trimmedKeyword, (billConfigurationPage.Name, "Bill"));
                 }
             }
 

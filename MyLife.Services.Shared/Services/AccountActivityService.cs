@@ -16,69 +16,41 @@ public interface IAccountActivityService
     Task<AccountActivityItem> Update(string id, string name, string category, CancellationToken cancellationToken = default);
 }
 
-public class AccountActivityService : IAccountActivityService
+public class AccountActivityService : CosmosService, IAccountActivityService
 {
     public const string DatabaseId = "MyLife";
     public const string ContainerId = "Account Activity";
     public const string PartitionKey = "/id";
 
-    private readonly MyLifeCosmosSettings _settings;
-
-    private readonly CosmosClientOptions _cosmosClientOptions = new()
+    public AccountActivityService(CosmosClient cosmosClient) : base(cosmosClient)
     {
-        SerializerOptions = new CosmosSerializationOptions()
-        {
-            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
-        }
-    };
-
-    public AccountActivityService(MyLifeCosmosSettings settings) => _settings = settings;
-
-    public async Task<int> Count()
-    {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
-        Container container = database.GetContainer(ContainerId);
-
-        var count = await container.GetItemLinqQueryable<AccountActivityItem>().CountAsync();
-
-        return count;
     }
 
-    public async Task<int> Count(int year, int month)
+    public Task<int> Count()
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
+        Container container = database.GetContainer(ContainerId);
 
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        QueryDefinition queryDefinition = new QueryDefinition("SELECT VALUE COUNT(item.id) FROM item");
+        return Count(container.GetItemQueryIterator<int>(queryDefinition));
+    }
+
+    public Task<int> Count(int year, int month)
+    {
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         QueryDefinition queryDefinition = new QueryDefinition("SELECT VALUE COUNT(item.id) FROM item WHERE DateTimePart(\"yyyy\", item.date) = @year AND DateTimePart(\"mm\", item.date) = @month")
                 .WithParameter("@year", year)
                 .WithParameter("@month", month);
 
-
-        var iterator = container.GetItemQueryIterator<int>(queryDefinition);
-
-        var count = 0;
-        while (iterator.HasMoreResults)
-        {
-            var currentResultSet = await iterator.ReadNextAsync();
-            foreach (var res in currentResultSet)
-            {
-                count += res;
-            }
-        }
-
-        return count;
+        return Count(container.GetItemQueryIterator<int>(queryDefinition));
     }
 
 
     public async Task Delete(string id)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         await container.DeleteItemAsync<AccountActivityItem>(id, new(id));
@@ -86,19 +58,15 @@ public class AccountActivityService : IAccountActivityService
 
     public async Task<AccountActivityItem> Get(string id)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         return await container.ReadItemAsync<AccountActivityItem>(id, new(id));
     }
 
-    public async Task<List<AccountActivityItem>> Get(int pageNumber = 0, int? pageSize = null, string? category = null)
+    public Task<List<AccountActivityItem>> Get(int pageNumber = 0, int? pageSize = null, string? category = null)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         IQueryable<AccountActivityItem> query = container.GetItemLinqQueryable<AccountActivityItem>()
@@ -117,26 +85,12 @@ public class AccountActivityService : IAccountActivityService
             query = query.Skip(skip).Take(take);
         }
 
-        var feed = query.ToFeedIterator();
-
-        List<AccountActivityItem> results = new();
-
-        while (feed.HasMoreResults)
-        {
-            foreach (AccountActivityItem reading in await feed.ReadNextAsync())
-            {
-                results.Add(reading);
-            }
-        }
-
-        return results;
+        return ReadFeed(query.ToFeedIterator());
     }
 
-    public async Task<List<AccountActivityItem>> Get(int year, int month, int pageNumber = 0, int? pageSize = null)
+    public Task<List<AccountActivityItem>> Get(int year, int month, int pageNumber = 0, int? pageSize = null)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         var query = "SELECT * FROM item WHERE DateTimePart(\"yyyy\", item.date) = @year AND DateTimePart(\"mm\", item.date) = @month";
@@ -163,26 +117,12 @@ public class AccountActivityService : IAccountActivityService
                 .WithParameter("@month", month);
         }
 
-        var feed = container.GetItemQueryIterator<AccountActivityItem>(queryDefinition);
-
-        List<AccountActivityItem> results = new();
-
-        while (feed.HasMoreResults)
-        {
-            foreach (AccountActivityItem reading in await feed.ReadNextAsync())
-            {
-                results.Add(reading);
-            }
-        }
-
-        return results;
+        return ReadFeed(container.GetItemQueryIterator<AccountActivityItem>(queryDefinition));
     }
 
     public async Task<AccountActivityItem> Update(string id, string name, string category, CancellationToken cancellationToken = default)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
+        Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
         AccountActivityItem accountActivityItem = await container.ReadItemAsync<AccountActivityItem>(id, new(id), cancellationToken: cancellationToken);

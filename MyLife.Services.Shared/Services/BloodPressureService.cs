@@ -8,34 +8,23 @@ public interface IBloodPressureService
     Task<BloodPressureReading> CreateReading(int systolic, int diastolic, int? heartRate, DateTime timeAtReading, CancellationToken cancellationToken = default);
     Task DeleteReading(string id);
     Task<BloodPressureReading> GetById(string id);
-    Task<int> GetCount();
+    Task<int> Count();
     Task<List<BloodPressureReading>> GetReadings(int skip, int take);
     Task<BloodPressureReading> UpdateReading(string id, int systolic, int diastolic, int? heartRate, DateTime timeAtReading, CancellationToken cancellationToken = default);
 }
 
-public class BloodPressureService : IBloodPressureService
+public class BloodPressureService : CosmosService, IBloodPressureService
 {
     private const string DatabaseId = "MyLife";
     private const string ContainerId = "Blood Pressure Readings";
 
-    private readonly MyLifeCosmosSettings _settings;
-
-    private readonly CosmosClientOptions _cosmosClientOptions = new()
+    public BloodPressureService(CosmosClient cosmosClient) : base(cosmosClient)
     {
-        SerializerOptions = new CosmosSerializationOptions()
-        {
-            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
-        }
-    };
-
-    public BloodPressureService(MyLifeCosmosSettings settings) => _settings = settings;
+    }
 
     public async Task<BloodPressureReading> CreateReading(int systolic, int diastolic, int? heartRate, DateTime timeAtReading, CancellationToken cancellationToken = default)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
-        Container container = database.GetContainer(ContainerId);
+        Container container = CosmosClient.GetDatabase(DatabaseId).GetContainer(ContainerId);
 
         BloodPressureReading reading = await container.CreateItemAsync(
             item: new BloodPressureReading(
@@ -53,68 +42,43 @@ public class BloodPressureService : IBloodPressureService
 
     public async Task DeleteReading(string id)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
-        Container container = database.GetContainer(ContainerId);
+        Container container = CosmosClient.GetDatabase(DatabaseId).GetContainer(ContainerId);
 
         await container.DeleteItemAsync<BloodPressureReading>(id, new(id));
     }
 
     public async Task<BloodPressureReading> GetById(string id)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
-        Container container = database.GetContainer(ContainerId);
+        Container container = CosmosClient.GetDatabase(DatabaseId).GetContainer(ContainerId);
 
         return await container.ReadItemAsync<BloodPressureReading>(id, new(id));
     }
 
-    public async Task<int> GetCount()
+    public Task<int> Count()
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
+        Container container = CosmosClient.GetDatabase(DatabaseId).GetContainer(ContainerId);
 
-        Database database = cosmosClient.GetDatabase(DatabaseId);
-        Container container = database.GetContainer(ContainerId);
+        QueryDefinition queryDefinition = new QueryDefinition("SELECT VALUE COUNT(item.id) FROM item");
 
-        var count = await container.GetItemLinqQueryable<BloodPressureReading>().CountAsync();
-
-        return count;
+        return Count(container.GetItemQueryIterator<int>(queryDefinition));
     }
 
-    public async Task<List<BloodPressureReading>> GetReadings(int skip, int take)
+    public Task<List<BloodPressureReading>> GetReadings(int skip, int take)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
+        Container container = CosmosClient.GetDatabase(DatabaseId).GetContainer(ContainerId);
 
-        Database database = cosmosClient.GetDatabase(DatabaseId);
-        Container container = database.GetContainer(ContainerId);
-
-        var feed = container.GetItemLinqQueryable<BloodPressureReading>()
-            .OrderByDescending(r => r.TimeAtReading)
-            .Skip(skip)
-            .Take(take)
-            .ToFeedIterator();
-
-        List<BloodPressureReading> readings = new();
-
-        while (feed.HasMoreResults)
-        {
-            foreach (BloodPressureReading reading in await feed.ReadNextAsync())
-            {
-                readings.Add(reading);
-            }
-        }
-
-        return readings;
+        return ReadFeed(
+            container.GetItemLinqQueryable<BloodPressureReading>()
+                .OrderByDescending(r => r.TimeAtReading)
+                .Skip(skip)
+                .Take(take)
+                .ToFeedIterator()
+        );
     }
 
     public async Task<BloodPressureReading> UpdateReading(string id, int systolic, int diastolic, int? heartRate, DateTime timeAtReading, CancellationToken cancellationToken = default)
     {
-        using CosmosClient cosmosClient = new(_settings.Endpoint, _settings.Key, _cosmosClientOptions);
-
-        Database database = cosmosClient.GetDatabase(DatabaseId);
-        Container container = database.GetContainer(ContainerId);
+        Container container = CosmosClient.GetDatabase(DatabaseId).GetContainer(ContainerId);
 
         BloodPressureReading reading = await container.UpsertItemAsync(
             item: new BloodPressureReading(

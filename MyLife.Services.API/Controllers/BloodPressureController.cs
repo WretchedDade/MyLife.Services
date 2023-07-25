@@ -34,7 +34,7 @@ public class BloodPressureController : MyLifeController
         [FromQuery][Range(1, int.MaxValue)] int pageSize = 25
     )
     {
-        var totalCount = await _bloodPressureService.GetCount();
+        var totalCount = await _bloodPressureService.Count();
 
         var readings = await _bloodPressureService.GetReadings(
             skip: pageNumber * pageSize,
