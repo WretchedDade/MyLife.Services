@@ -30,13 +30,13 @@ jobs:
         run: dotnet build --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/MyLife.Services.API
+        run: dotnet publish ./MyLife.Services.API/ -c Release -o ${{env.DOTNET_ROOT}}/Release/MyLife.Services.API
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/MyLife.Services.API
+          path: ${{env.DOTNET_ROOT}}/Release/MyLife.Services.API
           retention_days: 3
           
 
