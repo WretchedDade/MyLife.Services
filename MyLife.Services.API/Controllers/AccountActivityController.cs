@@ -57,13 +57,16 @@ public class AccountActivityController : MyLifeController
     public async Task<IActionResult> Get(
         int year,
         int month,
-        [FromQuery][Range(0, int.MaxValue)] int pageNumber = 0,
-        [FromQuery][Range(1, int.MaxValue)] int? pageSize = null
+        [FromQuery] int pageNumber = 0,
+        [FromQuery] int? pageSize = null,
+        [FromQuery] string? category = null
     )
     {
         var totalCount = await _accountActivityService.Count(year, month);
 
-        var items = await _accountActivityService.Get(year, month, pageNumber, pageSize);
+        var items = string.IsNullOrEmpty(category) 
+            ? await _accountActivityService.Get(year, month, pageNumber, pageSize) 
+            : await _accountActivityService.Get(year, month, category, pageNumber, pageSize);
 
         Page<AccountActivityItem> page = new(
             pageNumber: pageNumber,

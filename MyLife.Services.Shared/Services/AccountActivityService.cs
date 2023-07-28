@@ -13,6 +13,7 @@ public interface IAccountActivityService
     Task<List<AccountActivityItem>> Get(int pageNumber = 0, int? pageSize = null, string? category = null);
     Task<AccountActivityItem> Get(string id);
     Task<List<AccountActivityItem>> Get(int year, int month, int pageNumber = 0, int? pageSize = null);
+    Task<List<AccountActivityItem>> Get(int year, int month, string category, int pageNumber = 0, int? pageSize = null);
     Task<AccountActivityItem> Update(string id, string name, string category, CancellationToken cancellationToken = default);
 }
 
@@ -93,7 +94,7 @@ public class AccountActivityService : CosmosService, IAccountActivityService
         Database database = CosmosClient.GetDatabase(DatabaseId);
         Container container = database.GetContainer(ContainerId);
 
-        var query = "SELECT * FROM item WHERE DateTimePart(\"yyyy\", item.date) = @year AND DateTimePart(\"mm\", item.date) = @month";
+        var query = "SELECT * FROM item WHERE DateTimePart(\"yyyy\", item.date) = @year AND DateTimePart(\"mm\", item.date) = @month ORDER BY item.date DESC";
 
         QueryDefinition queryDefinition;
 
@@ -115,6 +116,47 @@ public class AccountActivityService : CosmosService, IAccountActivityService
             queryDefinition = new QueryDefinition(query)
                 .WithParameter("@year", year)
                 .WithParameter("@month", month);
+        }
+
+        return ReadFeed(container.GetItemQueryIterator<AccountActivityItem>(queryDefinition));
+    }
+
+    public Task<List<AccountActivityItem>> Get(int year, int month, string category, int pageNumber = 0, int? pageSize = null)
+    {
+        Database database = CosmosClient.GetDatabase(DatabaseId);
+        Container container = database.GetContainer(ContainerId);
+
+        var query = @"
+            SELECT * 
+            FROM item 
+            WHERE DateTimePart(""yyyy"", item.date) = @year 
+                AND DateTimePart(""mm"", item.date) = @month 
+                AND item.category = @category 
+            ORDER BY item.date DESC
+        ";
+
+        QueryDefinition queryDefinition;
+
+        if (pageSize.HasValue)
+        {
+            int skip = pageNumber * pageSize.Value;
+            int take = pageSize.Value;
+
+            query += " OFFSET @skip LIMIT @take";
+
+            queryDefinition = new QueryDefinition(query)
+                .WithParameter("@year", year)
+                .WithParameter("@month", month)
+                .WithParameter("@category", category)
+                .WithParameter("@skip", skip)
+                .WithParameter("@take", take);
+        }
+        else
+        {
+            queryDefinition = new QueryDefinition(query)
+                .WithParameter("@year", year)
+                .WithParameter("@month", month)
+                .WithParameter("@category", category);
         }
 
         return ReadFeed(container.GetItemQueryIterator<AccountActivityItem>(queryDefinition));
