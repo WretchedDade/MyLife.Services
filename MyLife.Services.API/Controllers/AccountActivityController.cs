@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web.Resource;
 using MyLife.Services.API.Models;
+using MyLife.Services.Shared.Extensions;
 using MyLife.Services.Shared.Services;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 
 namespace MyLife.Services.API.Controllers;
 
@@ -62,7 +64,9 @@ public class AccountActivityController : MyLifeController
         [FromQuery] string? category = null
     )
     {
-        var totalCount = await _accountActivityService.Count(year, month);
+        var totalCount = string.IsNullOrEmpty(category) 
+            ? await _accountActivityService.Count(year, month) 
+            : await _accountActivityService.Count(year, month, category);
 
         var items = string.IsNullOrEmpty(category) 
             ? await _accountActivityService.Get(year, month, pageNumber, pageSize) 
@@ -76,6 +80,24 @@ public class AccountActivityController : MyLifeController
         );
 
         return Ok(page);
+    }
+
+    [HttpGet("AccountActivity/History/ByMonth", Name = "Get Account Activity History by Month")]
+    public async Task<IActionResult> GetHistory(int? months = 12)
+    {
+        var date = DateTime.Today.ToFirstOfMonth().AddMonths(-months.GetValueOrDefault(12));
+
+        var expenses = await _accountActivityService.GetExpensesOnOrAfter(date);
+        var income = await _accountActivityService.GetIncomeOnOrAfter(date);
+
+        return Ok(new
+        {
+            expenses = expenses.GroupBy(item => $"{item.Date.Month.ToMonthAbbr()} {item.Date.Year}")
+                .ToDictionary(group => group.Key, group => group.Sum(item => Math.Abs(item.Amount))),
+
+            income = income.GroupBy(item => $"{item.Date.Month.ToMonthAbbr()} {item.Date.Year}")
+                .ToDictionary(group => group.Key, group => group.Sum(item => item.Amount)),
+        });
     }
 
     [HttpPut("AccountActivity/{id}", Name = "Update an Account Activity Item")]

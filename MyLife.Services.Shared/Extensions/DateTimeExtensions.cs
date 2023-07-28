@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,5 +23,8 @@ public static class DateTimeExtensions
         DayOfWeek.Sunday => dateTime.AddDays(1),
         _ => throw new NotImplementedException()
     };
+
+    public static string ToMonthName(this int month) => CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month);
+    public static string ToMonthAbbr(this int month) => CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(month);
 
 }

@@ -9,11 +9,14 @@ public interface IAccountActivityService
 {
     Task<int> Count();
     Task<int> Count(int year, int month);
+    Task<int> Count(int year, int month, string category);
     Task Delete(string id);
     Task<List<AccountActivityItem>> Get(int pageNumber = 0, int? pageSize = null, string? category = null);
     Task<AccountActivityItem> Get(string id);
     Task<List<AccountActivityItem>> Get(int year, int month, int pageNumber = 0, int? pageSize = null);
     Task<List<AccountActivityItem>> Get(int year, int month, string category, int pageNumber = 0, int? pageSize = null);
+    Task<List<AccountActivityItem>> GetExpensesOnOrAfter(DateTime dateTime);
+    Task<List<AccountActivityItem>> GetIncomeOnOrAfter(DateTime dateTime);
     Task<AccountActivityItem> Update(string id, string name, string category, CancellationToken cancellationToken = default);
 }
 
@@ -44,6 +47,19 @@ public class AccountActivityService : CosmosService, IAccountActivityService
         QueryDefinition queryDefinition = new QueryDefinition("SELECT VALUE COUNT(item.id) FROM item WHERE DateTimePart(\"yyyy\", item.date) = @year AND DateTimePart(\"mm\", item.date) = @month")
                 .WithParameter("@year", year)
                 .WithParameter("@month", month);
+
+        return Count(container.GetItemQueryIterator<int>(queryDefinition));
+    }
+
+    public Task<int> Count(int year, int month, string category)
+    {
+        Database database = CosmosClient.GetDatabase(DatabaseId);
+        Container container = database.GetContainer(ContainerId);
+
+        QueryDefinition queryDefinition = new QueryDefinition("SELECT VALUE COUNT(item.id) FROM item WHERE DateTimePart(\"yyyy\", item.date) = @year AND DateTimePart(\"mm\", item.date) = @month AND item.category = @category")
+                .WithParameter("@year", year)
+                .WithParameter("@month", month)
+                .WithParameter("@category", category);
 
         return Count(container.GetItemQueryIterator<int>(queryDefinition));
     }
@@ -158,6 +174,28 @@ public class AccountActivityService : CosmosService, IAccountActivityService
                 .WithParameter("@month", month)
                 .WithParameter("@category", category);
         }
+
+        return ReadFeed(container.GetItemQueryIterator<AccountActivityItem>(queryDefinition));
+    }
+
+    public Task<List<AccountActivityItem>> GetExpensesOnOrAfter(DateTime dateTime)
+    {
+        Database database = CosmosClient.GetDatabase(DatabaseId);
+        Container container = database.GetContainer(ContainerId);
+
+        QueryDefinition queryDefinition = new QueryDefinition("SELECT * FROM item WHERE item.date >= @date and item.amount < 0")
+            .WithParameter("@date", dateTime);
+
+        return ReadFeed(container.GetItemQueryIterator<AccountActivityItem>(queryDefinition));
+    }
+
+    public Task<List<AccountActivityItem>> GetIncomeOnOrAfter(DateTime dateTime)
+    {
+        Database database = CosmosClient.GetDatabase(DatabaseId);
+        Container container = database.GetContainer(ContainerId);
+
+        QueryDefinition queryDefinition = new QueryDefinition("SELECT * FROM item WHERE item.date >= @date and item.amount > 0")
+            .WithParameter("@date", dateTime);
 
         return ReadFeed(container.GetItemQueryIterator<AccountActivityItem>(queryDefinition));
     }
