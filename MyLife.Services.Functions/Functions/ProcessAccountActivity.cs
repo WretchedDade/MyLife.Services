@@ -76,7 +76,7 @@ namespace MyLife.Services.Functions
             return keywords?.ToDictionary(x => x.Keyword, x => (x.Name, x.Category)) ?? new();
         }
 
-        public (string Name, string Category)? GetNameAndCategory(AccountActivityItem item, Dictionary<string, (string Name, string Category)> keywords)
+        private (string Name, string Category)? GetNameAndCategory(AccountActivityItem item, Dictionary<string, (string Name, string Category)> keywords)
         {
             foreach (var (key, (name, category)) in keywords)
             {

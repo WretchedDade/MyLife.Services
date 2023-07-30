@@ -11,4 +11,6 @@ public static class EnvironmentVariables
     public const string NotionBloodPressureDatabaseId = "NOTION_BLOOD_PRESSURE_DATABASE_ID";
     public const string CosmosMyLifeKey = "COSMOS_MY_LIFE_KEY";
     public const string CosmosMyLifeEndpoint  = "COSMOS_MY_LIFE_ENDPOINT";
+    public const string WellsFargoUsername = "WELLS_FARGO_USERNAME";
+    public const string WellsFargoPassword = "WELLS_FARGO_PASSWORD";
 }

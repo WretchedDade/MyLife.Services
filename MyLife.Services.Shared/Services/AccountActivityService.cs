@@ -240,4 +240,12 @@ public record AccountActivityItem
 
     [JsonPropertyName("hasShortName")]
     public bool HasShortName => FullName != Name;
+
+    [JsonPropertyName("accountName")]
+    public AccountName AccountName { get; set; } = AccountName.Checking;
+}
+
+public enum AccountName
+{
+    Checking, Saving, CreditCard
 }
