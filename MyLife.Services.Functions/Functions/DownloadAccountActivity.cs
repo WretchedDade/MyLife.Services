@@ -50,6 +50,8 @@ namespace MyLife.Services.Functions.Functions
         [CosmosDBOutput(AccountActivityService.DatabaseId, AccountActivityService.ContainerId, Connection = "COSMOS_CONNECTION_STRING", CreateIfNotExists = true, PartitionKey = AccountActivityService.PartitionKey)]
         public async Task<IEnumerable<AccountActivityItem>> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
         {
+            var options = await req.ReadFromJsonAsync<DownloadAccountActivityOptions>() ?? new();
+
             var keywords = await GetKeywords();
 
             Microsoft.Playwright.Program.Main(new[] { "install" });
@@ -61,17 +63,17 @@ namespace MyLife.Services.Functions.Functions
 
             await Login(page);
 
-            var checking = await DownloadAccountActivityCsv(page, "Dade's Checking");
+            var checking = await DownloadAccountActivityCsv(page, "Dade's Checking", options.NumberOfMonths);
             var checkingItems = MapToItems(checking, AccountName.Checking, keywords).ToList();
 
             await page.GetByRole(AriaRole.Link).GetByText("Account Summary", new() {  Exact = true }).ClickAsync();
 
-            var savings = await DownloadAccountActivityCsv(page, "Savings");
+            var savings = await DownloadAccountActivityCsv(page, "Savings", options.NumberOfMonths);
             var savingsItems = MapToItems(savings, AccountName.Saving, keywords).ToList();
 
             await page.GetByRole(AriaRole.Link).GetByText("Account Summary", new() { Exact = true }).ClickAsync();
 
-            var credit = await DownloadAccountActivityCsv(page, "My Credit Card");
+            var credit = await DownloadAccountActivityCsv(page, "My Credit Card", options.NumberOfMonths);
             var creditItems = MapToItems(credit, AccountName.CreditCard, keywords).ToList();
 
             return Concatenate(checkingItems, savingsItems, creditItems);            
@@ -99,14 +101,14 @@ namespace MyLife.Services.Functions.Functions
             await page.WaitForURLAsync("**/accounts/start**");
         }
 
-        private async Task<string> DownloadAccountActivityCsv(IPage page, string account)
+        private async Task<string> DownloadAccountActivityCsv(IPage page, string account, int numberOfMonths)
         {
             await page.GetByRole(AriaRole.Link).GetByText(account).ClickAsync();
             await page.GetByText("Download Account Activity").ClickAsync();
 
             var fromDateInput = page.GetByTestId("input-fromDate");
             await fromDateInput.FillAsync("");
-            await fromDateInput.FillAsync(DateTime.Now.AddYears(-1).ToString("MM/dd/yyyy"));
+            await fromDateInput.FillAsync(DateTime.Today.AddMonths(-numberOfMonths).ToString("MM/dd/yyyy"));
 
             await page.GetByTestId("radio-fileFormat-commaDelimited").ClickAsync();
 
@@ -140,7 +142,14 @@ namespace MyLife.Services.Functions.Functions
                     }
                 }
 
-                yield return item with { Name = name, Category = category, AccountName = accountName };
+                Card? card = item.FullName switch
+                {
+                    string details when details.Contains("CARD5084") || details.Contains("CARD 5084") => Card.DebitDade,
+                    string details when details.Contains("CARD8009") || details.Contains("CARD 8009") => Card.DebitCarla,
+                    _ => null
+                };
+
+                yield return item with { Name = name, Category = category, AccountName = accountName, CardUsed = card };
             };
         }
 
@@ -167,4 +176,6 @@ namespace MyLife.Services.Functions.Functions
             return lists.SelectMany(x => x);
         }
     }
+
+    public record DownloadAccountActivityOptions(int NumberOfMonths = 3);
 }

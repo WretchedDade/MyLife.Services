@@ -92,10 +92,10 @@ public class AccountActivityController : MyLifeController
 
         return Ok(new
         {
-            expenses = expenses.GroupBy(item => $"{item.Date.Month.ToMonthAbbr()} {item.Date.Year}")
+            expenses = expenses.Where(item => item.AccountName != AccountName.Saving).GroupBy(item => $"{item.Date.Month.ToMonthAbbr()} {item.Date.Year}")
                 .ToDictionary(group => group.Key, group => group.Sum(item => Math.Abs(item.Amount))),
 
-            income = income.GroupBy(item => $"{item.Date.Month.ToMonthAbbr()} {item.Date.Year}")
+            income = income.Where(item => item.AccountName != AccountName.CreditCard).GroupBy(item => $"{item.Date.Month.ToMonthAbbr()} {item.Date.Year}")
                 .ToDictionary(group => group.Key, group => group.Sum(item => item.Amount)),
         });
     }

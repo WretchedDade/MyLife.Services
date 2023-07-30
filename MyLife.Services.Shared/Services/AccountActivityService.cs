@@ -243,9 +243,19 @@ public record AccountActivityItem
 
     [JsonPropertyName("accountName")]
     public AccountName AccountName { get; set; } = AccountName.Checking;
+
+    [JsonPropertyName("cardUsed")]
+    public Card? CardUsed { get; set; }
 }
 
 public enum AccountName
 {
     Checking, Saving, CreditCard
+}
+
+public enum Card
+{
+    DebitDade,
+    DebitCarla,
+    Credit
 }
