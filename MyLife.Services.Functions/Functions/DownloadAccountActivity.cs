@@ -1,20 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Formats.Asn1;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
-using MyLife.Services.Shared.Extensions;
 using MyLife.Services.Shared.Services;
 using RecordParser.Builders.Reader;
 using RecordParser.Parsers;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MyLife.Services.Functions.Functions
 {
@@ -66,7 +62,7 @@ namespace MyLife.Services.Functions.Functions
             var checking = await DownloadAccountActivityCsv(page, "Dade's Checking", options.NumberOfMonths);
             var checkingItems = MapToItems(checking, AccountName.Checking, keywords).ToList();
 
-            await page.GetByRole(AriaRole.Link).GetByText("Account Summary", new() {  Exact = true }).ClickAsync();
+            await page.GetByRole(AriaRole.Link).GetByText("Account Summary", new() { Exact = true }).ClickAsync();
 
             var savings = await DownloadAccountActivityCsv(page, "Savings", options.NumberOfMonths);
             var savingsItems = MapToItems(savings, AccountName.Saving, keywords).ToList();
@@ -76,7 +72,7 @@ namespace MyLife.Services.Functions.Functions
             var credit = await DownloadAccountActivityCsv(page, "My Credit Card", options.NumberOfMonths);
             var creditItems = MapToItems(credit, AccountName.CreditCard, keywords).ToList();
 
-            return Concatenate(checkingItems, savingsItems, creditItems);            
+            return Concatenate(checkingItems, savingsItems, creditItems);
         }
 
         private async Task Login(IPage page)
@@ -98,7 +94,7 @@ namespace MyLife.Services.Functions.Functions
                 await page.GetByLabel("Password", new() { Exact = true }).FillAsync(password);
             }
 
-            await page.WaitForURLAsync("**/accounts/start**");
+            await page.WaitForURLAsync("**/accounts/start**", new() { Timeout = 0 });
         }
 
         private async Task<string> DownloadAccountActivityCsv(IPage page, string account, int numberOfMonths)
@@ -126,7 +122,7 @@ namespace MyLife.Services.Functions.Functions
             var rows = csv.Split(new string[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
             var items = rows.Select(row => _accountActivityItemReader.Parse(row));
 
-            foreach(var item in items)
+            foreach (var item in items)
             {
                 var (name, category) = GetNameAndCategory(item, keywords) ?? (string.Empty, "Misc (Unmapped)");
 
