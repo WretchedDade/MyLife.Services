@@ -233,7 +233,7 @@ public record AccountActivityItem
     public DateTime Date { get; set; }
 
     [JsonPropertyName("id")]
-    public string Id => $"{Date:yyyyMMdd} {Name} ({Amount})";
+    public string Id => $"{Date:yyyyMMdd} {AccountName} ({Amount})";
 
     [JsonPropertyName("lastModifiedOn")]
     public DateTime LastModifiedOn => DateTime.UtcNow;
