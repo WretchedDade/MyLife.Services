@@ -4,7 +4,7 @@ using Microsoft.Graph;
 using Microsoft.Graph.Models.ODataErrors;
 using Microsoft.Identity.Web.Resource;
 
-namespace MyLife.Services.API.Controllers;
+namespace MyLife.Services.API.Controllers.v1;
 
 [Authorize]
 [ApiController]

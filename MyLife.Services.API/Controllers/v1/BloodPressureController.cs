@@ -5,7 +5,7 @@ using MyLife.Services.API.Models;
 using MyLife.Services.Shared.Services;
 using System.ComponentModel.DataAnnotations;
 
-namespace MyLife.Services.API.Controllers;
+namespace MyLife.Services.API.Controllers.v1;
 
 [Authorize]
 [ApiController]

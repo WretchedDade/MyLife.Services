@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Graph;
 
-namespace MyLife.Services.API.Controllers;
+namespace MyLife.Services.API.Controllers.v1;
 
 public class MyLifeController : ControllerBase
 {
@@ -22,7 +22,7 @@ public class MyLifeController : ControllerBase
             AuthorityHost = AzureAuthorityHosts.AzurePublicCloud,
         };
 
-        var accessToken = await this.HttpContext.GetTokenAsync("access_token");
+        var accessToken = await HttpContext.GetTokenAsync("access_token");
 
         return new OnBehalfOfCredential(tenantId, clientId, clientSecret, accessToken, options);
     }

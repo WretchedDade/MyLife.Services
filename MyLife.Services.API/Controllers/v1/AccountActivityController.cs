@@ -7,7 +7,7 @@ using MyLife.Services.Shared.Services;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 
-namespace MyLife.Services.API.Controllers;
+namespace MyLife.Services.API.Controllers.v1;
 
 [Authorize]
 [ApiController]
@@ -64,12 +64,12 @@ public class AccountActivityController : MyLifeController
         [FromQuery] string? category = null
     )
     {
-        var totalCount = string.IsNullOrEmpty(category) 
-            ? await _accountActivityService.Count(year, month) 
+        var totalCount = string.IsNullOrEmpty(category)
+            ? await _accountActivityService.Count(year, month)
             : await _accountActivityService.Count(year, month, category);
 
-        var items = string.IsNullOrEmpty(category) 
-            ? await _accountActivityService.Get(year, month, pageNumber, pageSize) 
+        var items = string.IsNullOrEmpty(category)
+            ? await _accountActivityService.Get(year, month, pageNumber, pageSize)
             : await _accountActivityService.Get(year, month, category, pageNumber, pageSize);
 
         Page<AccountActivityItem> page = new(

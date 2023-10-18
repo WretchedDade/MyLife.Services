@@ -7,7 +7,7 @@ using MyLife.Services.Shared.Models;
 using MyLife.Services.Shared.Models.Notion.Page;
 using MyLife.Services.Shared.Services;
 
-namespace MyLife.Services.API.Controllers;
+namespace MyLife.Services.API.Controllers.v1;
 
 [Authorize]
 [ApiController]

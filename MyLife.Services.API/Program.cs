@@ -1,13 +1,19 @@
 using Azure.Core.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Models;
+using MyLife.Services.API;
 using MyLife.Services.API.Infra;
 using MyLife.Services.Shared.Services;
 using Prometheus;
+using Swashbuckle.AspNetCore.SwaggerUI;
+using System.Reflection;
 using System.Text.Json.Serialization;
 using static Prometheus.MetricServerMiddleware;
 
@@ -33,27 +39,28 @@ builder.Services.AddCors(options =>
 });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
+
+
+builder.Services.AddApiVersioning(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Version = "v1",
-        Title = "ToDo API",
-        Description = "An ASP.NET Core Web API for managing ToDo items",
-        TermsOfService = new Uri("https://example.com/terms"),
-        Contact = new OpenApiContact
-        {
-            Name = "Example Contact",
-            Url = new Uri("https://example.com/contact")
-        },
-        License = new OpenApiLicense
-        {
-            Name = "Example License",
-            Url = new Uri("https://example.com/license")
-        }
-    });
+    options.ReportApiVersions = true;
+    options.UseApiBehavior = true;
+
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(new UrlSegmentApiVersionReader(), new HeaderApiVersionReader("x-api-version"), new MediaTypeApiVersionReader("x-api-version"));
 });
+
+//builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddVersionedApiExplorer(setup =>
+{
+    setup.GroupNameFormat = "'v'VVV";
+    setup.SubstituteApiVersionInUrl = true;
+});
+
+// Configure Swagger
+builder.Services.AddSwaggerGen();
+_ = builder.Services.ConfigureOptions<SwaggerOptionsConfigurator>();
 
 builder.Services.AddHealthChecks();
 
@@ -94,6 +101,7 @@ builder.Services.AddScoped<IBloodPressureService, BloodPressureService>();
 builder.Services.AddScoped<IAccountActivityService, AccountActivityService>();
 builder.Services.AddScoped<IBankKeywordConfigService, BankKeywordConfigService>();
 
+
 // Setup a listener to monitor logged events.
 using AzureEventSourceListener listener = AzureEventSourceListener.CreateConsoleLogger();
 
@@ -114,8 +122,16 @@ else
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-    options.RoutePrefix = string.Empty;
+    options.DocExpansion(DocExpansion.None);
+
+    IApiVersionDescriptionProvider apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+    foreach (ApiVersionDescription? description in apiVersionDescriptionProvider.ApiVersionDescriptions.Reverse())
+    {
+        options.RoutePrefix = string.Empty;
+        options.DocumentTitle = "MCAPS Academy API Documentation";
+
+        options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+    }
 });
 
 app.MapHealthChecks("/health");

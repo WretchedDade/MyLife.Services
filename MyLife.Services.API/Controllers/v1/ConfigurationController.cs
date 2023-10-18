@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 using MyLife.Services.API.Infra;
 using MyLife.Services.Shared.Models.Notion;
 
-namespace MyLife.Services.API.Controllers;
+namespace MyLife.Services.API.Controllers.v1;
 
 [Authorize]
 [ApiController]
