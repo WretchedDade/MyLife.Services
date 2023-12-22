@@ -104,14 +104,15 @@ namespace MyLife.Services.Functions.Functions
                     return null;
                 }
 
+                var dateDueThisMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, billConfiguration.DayDue.Value, 0, 0, 0, DateTimeKind.Utc);
+
                 if (DateTime.Today.Day <= billConfiguration.DayDue.Value)
                     // Bill is due in current month
-                    return new DateTime(DateTime.Today.Year, DateTime.Today.Month, billConfiguration.DayDue.Value, 0,0,0, DateTimeKind.Utc);
+                    return dateDueThisMonth;
+
                 else
-                {
                     // Bill isn't due till next month
-                    return new DateTime(DateTime.Today.Year, DateTime.Today.Month + 1, billConfiguration.DayDue.Value, 0, 0, 0, DateTimeKind.Utc);
-                }
+                    return dateDueThisMonth.AddMonths(1);
             }
             else if (billConfiguration.DayDueType == DayDueTypes.EndOfMonth)
             {
